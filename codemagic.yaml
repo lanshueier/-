@@ -1,0 +1,62 @@
+workflows:
+  android-build:
+    name: Android Build Workflow
+    instance_type: mac_mini
+    max_build_duration: 60
+    environment:
+      node: latest
+      yarn: latest
+      android_api_level: 33
+      gradle_version: 8.0
+      vars:
+        APP_ID: "com.example.splitscreen"  # 替换为您的应用ID
+        APP_VERSION: "1.0.0"               # 替换为您的应用版本
+      groups:
+        - android-signing-credentials      # 引用您在Codemagic中设置的环境变量组
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $HOME/.yarn
+        - $CM_BUILD_DIR/node_modules
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Build web assets
+        script: |
+          npm run build
+      - name: Sync with Capacitor
+        script: |
+          npx cap sync android
+      - name: Add split-screen support
+        script: |
+          # 修改AndroidManifest.xml以支持分屏模式
+          sed -i -e 's/<application/<application android:resizeableActivity="true"/' android/app/src/main/AndroidManifest.xml
+      - name: Set version code and name
+        script: |
+          cd android
+          # 使用Codemagic的构建编号作为版本号
+          ./gradlew app:setVersionCode -PversionCode=$CM_BUILD_NUMBER
+          ./gradlew app:setVersionName -PversionName=$APP_VERSION
+      - name: Build debug APK
+        script: |
+          cd android
+          ./gradlew assembleDebug
+      - name: Build release APK
+        script: |
+          cd android
+          # 使用环境变量中的签名信息构建发布版本
+          ./gradlew assembleRelease -Pandroid.injected.signing.store.file=$KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+    artifacts:
+      - android/app/build/outputs/apk/**/*.apk
+      - android/app/build/outputs/bundle/**/*.aab
+    publishing:
+      email:
+        recipients:
+          - 594638006@qq.com  # 替换为您的邮箱
+        notify:
+          success: true
+          failure: true
