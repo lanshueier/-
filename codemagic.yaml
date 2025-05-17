@@ -1,19 +1,18 @@
 workflows:
   android-build:
     name: Android Build
-    instance_type: mac_mini
     environment:
+      flutter: stable
+      java: openjdk11
       node: latest
-      yarn: latest
     scripts:
-      - name: Install dependencies
+      - name: Install Yarn and dependencies
         script: |
-          npm install
-      - name: Build Android APK
+          npm install -g yarn
+          flutter pub get
+          yarn install
+      - name: Build Android app
         script: |
-          npm run build
-          npx cap sync android
-          cd android
-          ./gradlew assembleDebug
+          flutter build apk --release
     artifacts:
-      - android/app/build/outputs/apk/**/*.apk
+      - build/app/outputs/**/*.apk
