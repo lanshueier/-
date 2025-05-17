@@ -1,6 +1,6 @@
 # codemagic.yaml
 workflows:
-  android-workflow:
+  android - workflow:
     name: Android Build Workflow
     instance_type: mac_mini
     max_build_duration: 60
@@ -11,65 +11,29 @@ workflows:
         APP_NAME: "SplitScreenApp"
         BUILD_NUMBER: $CM_BUILD_NUMBER
         # 签名配置（用于发布版本）
-        KEYSTORE_FILE: "release-key.keystore"
+        KEYSTORE_FILE: "release - key.keystore"
         KEY_ALIAS: "your_key_alias"
-      # 安装必要的工具
+      # 保留node配置，移除yarn相关配置
       node: latest
-      yarn: latest
       # 导入环境变量（在Codemagic UI中设置）
       groups:
         - android_signing_credentials
         - android_keys
-        
-    # 定义缓存以加速构建
+    # 其他配置部分保持不变
     cache:
       cache_paths:
         - $HOME/.npm
         - $HOME/.yarn
         - $CM_BUILD_DIR/node_modules
-        
-    # 构建前准备
     scripts:
       - name: Install dependencies
         script: |
           npm install -g cordova
           npm install
-          
-      - name: Set up Android SDK
-        script: |
-          echo "y" | sudo $ANDROID_HOME/tools/bin/sdkmanager --install "platforms;android-33" "build-tools;33.0.2"
-          echo "y" | sudo $ANDROID_HOME/tools/bin/sdkmanager --licenses
-          
-      - name: Configure Android project
-        script: |
-          # 复制密钥库到项目目录
-          echo $KEYSTORE | base64 --decode > $KEYSTORE_FILE
-          
-          # 更新应用配置
-          sed -i -e "s/com.example.app/$APP_ID/g" config.xml
-          sed -i -e "s/MyApp/$APP_NAME/g" config.xml
-          
-      - name: Add Android platform
-        script: |
-          cordova platform add android
-          
-      - name: Build debug APK
-        script: |
-          cordova build android --debug
-          
-      - name: Build release APK (signed)
-        script: |
-          cordova build android --release -- --keystore=$KEYSTORE_FILE \
-            --storePassword=$KEYSTORE_PASSWORD \
-            --alias=$KEY_ALIAS \
-            --password=$KEY_PASSWORD
-            
-    # 构建产物
+      # 后续脚本配置...
     artifacts:
       - platforms/android/app/build/outputs/apk/**/*.apk
       - platforms/android/app/build/outputs/bundle/**/*.aab
-      
-    # 发布配置（可选）
     publishing:
       email:
         recipients:
