@@ -5,7 +5,7 @@ workflows:
     max_build_duration: 60
     environment:
       node: latest
-      yarn: latest
+
       android_api_level: 33
       gradle_version: 8.0
       vars:
